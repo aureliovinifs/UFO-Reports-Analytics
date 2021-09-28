@@ -1,0 +1,44 @@
+# Gera as coordenadas das cidades dos Estados Unidos e salva em csv
+csv_columns = ['cidade', 'estado', 'lat', 'long']
+coords = []
+
+for i, row in ovnis.iterrows():
+  try:
+    lat = zipcodes.filter_by(city=row.cidade, state=row.estado)[0]['lat']
+    lng = zipcodes.filter_by(city=row.cidade, state=row.estado)[0]['long']
+  except IndexError:
+    continue
+
+  coords.append({'cidade': row.cidade, 'estado': row.estado, 'lat': lat, 'long': lng})
+
+pd.DataFrame(coords).to_csv('coords.csv')
+
+# Gera as coordenadas das cidades da Califórnia e salva em csv
+coords_eua = pd.read_csv('coords.csv')
+query = """
+SELECT cidade, estado, lat, long FROM coords_eua
+WHERE estado='CA'
+"""
+res = pandasql.sqldf(query, locals())
+res = pd.DataFrame(res)
+res.to_csv('coords_ca.csv')
+
+
+# Gera o mapa dos Estados Unidos e da Califórnia com suas respectivas ocorrências (1997-2017)
+coords_eua = pd.read_csv('coords.csv')
+coords_ca = pd.read_csv('coords_ca.csv')
+
+lat_eua = coords_eua.lat.tolist()
+lng_eua = coords_eua['long'].tolist()
+lat_ca = coords_ca.lat.tolist()
+lng_ca= coords_ca['long'].tolist()
+
+mapa_eua = folium.Map(location=[37.8427887, -98.3807258], tiles='cartodbdark_matter', zoom_start=4.25)
+mapa_ca = folium.Map(location=[37.2454668, -120.7021918], tiles='cartodbdark_matter', zoom_start=6)
+
+HeatMap(list(zip(lat_eua, lng_eua)), radius=10, overlay=False).add_to(mapa_eua)
+HeatMap(list(zip(lat_ca, lng_ca)), radius=10, overlay=False).add_to(mapa_ca)
+
+# Mostrar os mapas
+mapa_eua
+mapa_ca
