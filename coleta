@@ -1,0 +1,20 @@
+# Coleta a tabela raíz do site, filtrando pelas datas desejadas
+df_base = pd.DataFrame(pd.read_html("http://www.nuforc.org/webreports/ndxevent.html")[0])
+for i, row in df_base.iterrows():
+  if(row.Reports=='09/1997'):
+    fim = i+1
+  elif(row.Reports=='08/2017'):
+    inicio = i
+
+df_base = df_base[inicio:fim]
+
+
+# Concatenando as tabelas coletadas
+df = pd.DataFrame()
+for i, row in df_base.iterrows():
+  data = row.Reports.split('/')
+  df2 = pd.DataFrame(pd.read_html(f"http://www.nuforc.org/webreports/ndxe{data[1]}{data[0]}.html")[0])
+  df = pd.concat([df, df2], ignore_index=True)
+
+df.columns = ['data_hora' , 'cidade', 'estado', 'formato', 'duracao', 'resumo', 'data_postagem']
+df.to_csv('OVNIS.csv')
