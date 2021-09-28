@@ -1,0 +1,42 @@
+# Lendo e ajustando o df_OVNI_preparado.csv
+df_preparado = pd.read_csv('df_OVNI_preparado.csv')
+df_preparado.drop(columns='Unnamed: 0', inplace=True)
+df_preparado['data'] = pd.to_datetime(df_preparado['data'], format='%m/%d/%y')
+
+# Consulta o dataframe para obter a formação desejada
+ano = 2013
+qr = f"""
+SELECT data, mes, COUNT(*) AS views FROM df_preparado 
+WHERE cidade='Phoenix' AND ano={ano} GROUP BY data"""
+df_by_date = pd.DataFrame(pandasql.sqldf(qr, locals()))
+
+# Gera o figure do gráfico, as informações do eixo x e as seta o eixo y
+fig = plt.figure()
+ax = fig.add_axes([0,0,1,1])
+eixo_mes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+eixo_views = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+# Atualiza as informações do eixo y de acordo com o que vem do dataframe
+for i in range(0, len(df_by_date['mes'])):
+  eixo_views[df_by_date['mes'][i]-1] += df_by_date['views'][i]
+
+# Seta as informações do gráfico e exibe
+ax.bar(eixo_mes, eixo_views)
+ax.set_xlabel('meses')
+ax.set_ylabel('avistamentos')
+ax.set_title(f'Gráfico de avistamentos de OVNI em Phoenix ({ano})')
+plt.show()
+
+# Faz uma busca pelas views por data da cidade de Phoenix
+qr = """
+SELECT ano, COUNT(*) AS views FROM df_preparado 
+WHERE cidade='Phoenix' GROUP BY ano"""
+df_by_year = pd.DataFrame(pandasql.sqldf(qr, locals()))
+
+# Gera os eixos x e y do gráfico
+ypoints = df_by_year['views']
+xpoints = list(map(str, df_by_year['ano']))
+
+# Plota o gráfico (linhas)
+plt.plot(xpoints, ypoints)
+plt.show()
