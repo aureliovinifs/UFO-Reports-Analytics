@@ -1,0 +1,12 @@
+# Lendo a base OVNIS
+ovnis = pd.read_csv("OVNIS.csv")
+
+query = """
+SELECT estado, formato, COUNT(*) AS views FROM ovnis
+WHERE estado IN('CA','FL','WA','TX') AND formato IN('Light','Circle','Triangle','Fireball')
+GROUP BY estado, formato
+"""
+resultado = pd.DataFrame(pandasql.sqldf(query, locals()))
+
+resultado.pivot("estado", "formato", "views").plot(kind='bar')
+resultado.pivot("estado", "formato", "views").plot(kind='bar', stacked=True)
