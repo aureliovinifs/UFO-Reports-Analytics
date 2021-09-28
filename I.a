@@ -1,0 +1,13 @@
+# Faz uma consulta pelas visualizacoes por data (novamente)
+qr = f"""
+SELECT data, COUNT(*) AS views FROM df_preparado 
+WHERE cidade='Phoenix' GROUP BY data"""
+d = pd.DataFrame(pandasql.sqldf(qr, locals()))
+
+# Divide o dataframe resultante da consulta em treinamento (70%) e teste (30%)
+treinamento, teste = d[0:198], d[198:]
+
+modelo = SARIMAX(treinamento['views'], order=(1, 0, 0), trend='c')
+res = modelo.fit()
+print(f"A qualidade do modelo estimada pelo AIC é: {res.aic}\n")
+print(f"Previsão: \n{res.forecast()}")
