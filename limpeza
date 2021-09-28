@@ -1,0 +1,37 @@
+# Lendo o OVNIS.csv, apagando algumas colunas, e criando variáveis de controle
+ovnis_df = pd.read_csv('OVNIS.csv')
+ovnis_df = ovnis_df.drop(columns=['ID', 'duracao', 'resumo', 'data_postagem'])
+estados = pd.read_excel('states.xlsx')['Abbreviation'].tolist()
+formatos_relevantes = []
+qr = "SELECT formato, COUNT(*) AS views FROM ovnis_df GROUP BY formato"
+
+# Verificando quais são os formatos com mais de 1000 ocorrências
+r = pd.DataFrame(pandasql.sqldf(qr, locals()))
+for i, row in r.iterrows():
+  if row.views>=1000:
+    formatos_relevantes.append(row.formato)
+
+''' 
+Percorrendo o dataframe e apagando os registros que:
+
+- Não estão dentre os estados dos Estados Unidos;
+- Possuem registros Unknown
+- Não pertencem ao grupo de formatos com mais de 1000 ocorrências
+'''
+for i, row in ovnis_df.iterrows():
+  if row.estado not in estados:
+    ovnis_df.drop(index=i, inplace=True)
+  elif row.estado=='Unknown' or row.cidade=='Unknown' or row.formato=='Unknown':
+    ovnis_df.drop(index=i, inplace=True)
+  elif row.formato not in formatos_relevantes:
+    ovnis_df.drop(index=i, inplace=True)
+
+# Percorrendo o dataframe e apagando linhas com registros nulos
+for i, row in ovnis_df.isna().iterrows():
+  if row.estado==True or row.cidade==True or row.formato==True:
+    ovnis_df.drop(index=i, inplace=True)
+
+# Ajustando e salvando o arquivo
+ovnis_df = ovnis_df.reset_index()
+ovnis_df = ovnis_df.drop(columns=['index'])
+ovnis_df.to_csv('df_OVNI_limpo.csv')
