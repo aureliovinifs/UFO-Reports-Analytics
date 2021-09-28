@@ -1,0 +1,29 @@
+# Lendo o df_OVNI_limpo.csv, criando listas e variáveis de controle
+df_limpo = pd.read_csv('df_OVNI_limpo.csv')
+df_limpo = df_limpo.drop(columns=['Unnamed: 0'])
+dias = []
+meses = []
+weekdays = []
+horas = []
+datas = []
+anos = []
+DIAS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-Feira', 'Sexta-feira', 'Sábado', 'Domingo']
+
+# Percorrendo o dataframe e adicionando dados às listas criadas
+for i, row in df_limpo.iterrows():
+  try:
+    horas.append(row.data_hora.split(' ')[1])
+  except IndexError:
+    horas.append(None)
+
+  dt = datetime.strptime(row.data_hora.split(' ')[0], '%m/%d/%y')
+  meses.append(dt.month)
+  dias.append(dt.day)
+  anos.append(dt.year)
+  weekdays.append(DIAS[dt.weekday()])
+  datas.append(row.data_hora.split(' ')[0])
+
+# Atualizando o dataframe com novas colunas e salvando o arquivo
+df_limpo = df_limpo.assign(data=datas, hora=horas, dia_semana=weekdays, dia=dias, mes=meses, ano=anos)
+df_limpo.drop(columns=['data_hora'], inplace=True)
+df_limpo.to_csv('df_OVNI_preparado.csv')
